@@ -24,3 +24,5 @@ The database contains over 7000 disinformation cases and debunks. The data was c
 For now, an early version with initial analysis of a Shiny Dashboard is available here: https://alixdumoulin.shinyapps.io/disinformation_hackathon/
 
 The corresponding code is in the hackathon folder in the repo. Instructions on how to download and use the code will be available soon.
+
+![a_tab_from_dashboard](https://github.com/alix-dumoulin/eu_disinformation/blob/master/dashboard_pic.jpeg)
