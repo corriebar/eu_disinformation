@@ -1,0 +1,30 @@
+---
+title: "hackathon"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(httr)
+library(lubridate)
+library(jsonlite)
+
+claim_reviews <- list()
+
+for(i in 1:241) {
+  url  <- "https://api.veedoo.io"
+  path1 <- paste0("claim_reviews?page=", i)
+  path_full <- paste0(path1, "&perPage=30")
+  raw.result <- GET(url = url, path = path_full)
+  names(raw.result)
+  this.raw.content <- rawToChar(raw.result$content)
+  this.content <- fromJSON(this.raw.content)
+  claim_reviews[[i]] <- this.content$`hydra:member`
+}
+
+all_claim_reviews <- do.call(rbind, claim_reviews)
+```
+
