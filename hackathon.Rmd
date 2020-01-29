@@ -26,5 +26,27 @@ for(i in 1:241) {
 }
 
 all_claim_reviews <- do.call(rbind, claim_reviews)
+
+
+
+organizations <- list()
+
+for(i in 1:241) {
+  print(i)
+  url  <- "https://api.veedoo.io"
+  path1 <- paste0("organizations?page=", i)
+  path_full <- paste0(path1, "&perPage=30")
+  raw.result <- GET(url = url, path = path_full)
+  names(raw.result)
+  this.raw.content <- rawToChar(raw.result$content)
+  this.content <- fromJSON(this.raw.content)
+  organizations[[i]] <- this.content$`hydra:member`
+  organizations[[i]]$image <- NULL
+}
+
+all_organizations <- do.call(rbind, organizations)
+
+
+
 ```
 
