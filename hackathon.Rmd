@@ -46,7 +46,25 @@ for(i in 1:241) {
 
 all_organizations <- do.call(rbind, organizations)
 
+write.csv(all_organizations, "all_organizations.csv")
 
 
+news_articles <- list()
+
+for(i in 1:241) {
+  print(i)
+  url  <- "https://api.veedoo.io"
+  path1 <- paste0("organizations?page=", i)
+  path_full <- paste0(path1, "&perPage=30")
+  raw.result <- GET(url = url, path = path_full)
+  names(raw.result)
+  this.raw.content <- rawToChar(raw.result$content)
+  this.content <- fromJSON(this.raw.content)
+  news_articles[[i]] <- this.content$`hydra:member`
+}
+
+all_news_articles <- do.call(rbind, news_articles)
+
+write.csv(all_news_articles, "all_news_articles.csv")
 ```
 
