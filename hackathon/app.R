@@ -185,6 +185,14 @@ g <- list(
   projection = list(type = 'Mercator')
 )
 
+m <- list(
+  l = 0,
+  r = 0,
+  b = 0,
+  t = 0,
+  pad = 4
+)
+
 p <- plot_geo(all_the_countries) %>%
   add_trace(
     z = ~all, color = ~all, colors = 'Reds',
@@ -193,9 +201,35 @@ p <- plot_geo(all_the_countries) %>%
   colorbar(title = 'Number of articles') %>%
   layout(
     geo = g,
-    legend = list(orientation = 'h')
+    legend = list(orientation = 'h'), 
+    margin = m
   )
 
+
+
+
+dates <- c()
+
+for (i in 1:length(claims)) {
+  dates[i] <- claims[[i]]$datePublished
+  
+}
+
+dates <- gsub('.{18}$', '', dates)
+dates_df <- data.frame(dates, 1)
+
+time_series <- dates_df %>% 
+  group_by(dates) %>% 
+  summarise(frequency = n())
+
+
+time_series_plot <- ggplot(time_series, aes(x=dates, y=frequency, group = 1)) +
+  geom_line( color="steelblue") + 
+  geom_point() +
+  xlab("") +
+  scale_x_discrete(breaks=dates[seq(1,length(dates),by=2000)]) +
+  theme_minimal()
+time_series_plotly <- ggplotly(time_series_plot)
 
 
 
@@ -222,7 +256,7 @@ top10_plot <- ggplot(top10) +
   geom_bar(aes(y=Total, 
                x=Organisation), 
            stat="identity", 
-           fill = "#ff4000") +
+           fill = "steelblue") +
   coord_flip() +
   theme_minimal() +
   xlab("Organisation") +
@@ -264,7 +298,8 @@ ui <- dashboardPage(
                 box(plotlyOutput("plot_3"), title = "Number of articles by country target", width = 12, height = 500)
               ),
               fluidRow(
-                box(plotlyOutput("plot_4"), title = "Most active organisation", width = 6, height = 500)
+                box(plotlyOutput("plot_4"), title = "Most active organisation", width = 6, height = 500),
+                box(plotlyOutput("plot_5"), title = "Articles published over time", width = 6, height = 500)
               )
       ),
       
@@ -310,6 +345,10 @@ server <- function(input, output, session) {
   
   output$plot_4 <- renderPlotly({ 
     top10_plotly
+  })
+  
+  output$plot_5 <- renderPlotly({ 
+    time_series_plotly
   })
 }
 

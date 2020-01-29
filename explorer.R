@@ -255,8 +255,29 @@ get_languages("Sputnik Arabic")
 
 
 
-
 # Activity over time
 
+dates <- c()
+
+for (i in 1:length(claims)) {
+  dates[i] <- claims[[i]]$datePublished
+  
+}
+
+dates <- gsub('.{18}$', '', dates)
+dates_df <- data.frame(dates, 1)
+
+time_series <- dates_df %>% 
+  group_by(dates) %>% 
+  summarise(frequency = n())
+
+
+time_series_plot <- ggplot(time_series, aes(x=dates, y=frequency, group = 1)) +
+  geom_line( color="steelblue") + 
+  geom_point() +
+  xlab("") +
+  scale_x_discrete(breaks=dates[seq(1,length(dates),by=2000)]) +
+theme_minimal()
+time_series_plotly <- ggplotly(time_series_plot)
 
 # All articles
