@@ -46,7 +46,7 @@ for(i in 1:241) {
 
 all_organizations <- do.call(rbind, organizations)
 
-write.csv(all_organizations, "all_organizations.csv")
+write.csv(all_organizations, "all_organisations.csv")
 
 
 news_articles <- list()
@@ -54,7 +54,7 @@ news_articles <- list()
 for(i in 1:241) {
   print(i)
   url  <- "https://api.veedoo.io"
-  path1 <- paste0("organizations?page=", i)
+  path1 <- paste0("news_articles?page=", i)
   path_full <- paste0(path1, "&perPage=30")
   raw.result <- GET(url = url, path = path_full)
   names(raw.result)
@@ -108,6 +108,86 @@ for(i in 1:241) {
 
 all_keywords <- do.call(rbind, keywords)
 
-write.csv(keywords, "all_keywords.csv")
+write.csv(all_keywords, "all_keywords.csv")
+
+
+languages <- list()
+
+for(i in 1:241) {
+  print(i)
+  url  <- "https://api.veedoo.io"
+  path1 <- paste0("languages?page=", i)
+  path_full <- paste0(path1, "&perPage=30")
+  raw.result <- GET(url = url, path = path_full)
+  names(raw.result)
+  this.raw.content <- rawToChar(raw.result$content)
+  this.content <- fromJSON(this.raw.content)
+  languages[[i]] <- this.content$`hydra:member`
+  languages[[i]]$image <- NULL
+}
+
+all_languages <- do.call(rbind, languages)
+
+write.csv(all_languages, "all_languages.csv")
 ```
 
+
+Below are a bunch of attempts to creating a text similarity matching function.
+
+```{r}
+
+# step 1: scrape all the articles
+
+# step 2: put them in a corpus
+
+# step 3: get 
+
+require("Snowball")
+require("tm")
+library(readr)
+
+all_claim_reviews <- read_csv("all_claim_reviews.csv")
+my.corpus <- Corpus(VectorSource(all_claim_reviews$claimReviewed))
+
+dtm <- DocumentTermMatrix(my.corpus)
+X <- as.matrix(dtm)
+
+my.df.scale <- scale(X)
+d <- dist(my.df.scale,method="euclidean")
+fit <- hclust(d, method="ward")
+plot(fit)
+```
+
+```{r}
+library(tidyverse)
+
+articles_organisations <- merge(all_news_articles, all_organizations, by.x = "author",
+                                by.y = "@id")
+
+count_by_org <- articles_organisations %>%
+  group_by(tolower(name.y)) %>%
+  count()
+
+articles_organisations %>%
+  filter(n > 50)
+
+```
+
+
+Outline of the shiny dashboard:
+
+* Organisations
+
+- Number of articles
+- Favorite topics
+- Top languages
+
+* Topics
+
+- Where is it popular
+- Who publishes about it
+- 
+
+* Countries
+
+* Languages
