@@ -2,20 +2,27 @@
 
 Hackathon on disinformation, Brussels 29-30 January.
 
-## Initial Ideas
+## Steps taken
 
-* Check if link is in database - bot to highlight it as fake news. Simulation analysis. Maybe Twitter bot.
+1) Collected the data using the API (https://api.veedoo.io) - wrote them as .csv and .json
 
-* Visualization has great potential for awareness / insights. 
+2) Decided on 3 main axes to explore
 
-* Word vectorization and visualization. Maybe a Shiny dashboard to search, a network to see how they related and how the news relate to each other.
+3) Decided on an outcome / interface
 
-Steps
 
-1) pick a few axis to focus on (aka. insight outcomes e.g. "which news sources connect?"
+## The idea
 
-2) get the data
+### The big picture
 
-3) decide on an outcome (interface, product)
+A network analysis of the meta data to gain a broad idea of what the data is. This might include network analysis of organisations and the keywords they share.
 
-4) distribute tasks and get to work
+### The Explorer
+
+Based on word embedding and other quantitative text analysis methods, the user can explore word similarity and frequency in the data. This might include a search tool for a word which would output the other similar words and plot this.
+
+### The Action
+
+Using text similarity measures, the user could measure the similarity of an article with fake news articles. 
+
+
