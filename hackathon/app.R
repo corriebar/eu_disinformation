@@ -1,23 +1,21 @@
-
-
-### THEME FOR DASHBOARD ###
-
-# Create a theme for shiny dashboard - this will later be done directly in CSS
 #load libraries
 library(shiny)
-## Organisations ##
 library(readr)
 library(jsonlite)
 library(tidyverse)
 library(plotly)
 library(shinydashboard)
 library(dashboardthemes)
+library(SnowballC)
+
+all_keywords <- read_csv("all_keywords.csv")
+claims <- jsonlite::read_json("claims.json")
+all_claim_reviews <- read_csv("all_claim_reviews.csv")
+all_organizations <- read_csv("all_organisations.csv")
+all_news_articles <- read_csv("all_news_articles.csv")
+continents <- read.csv("continents")
 
 
-
-
-setwd("~/Desktop/eu_disinformation")
-continents <- read.csv("~/Desktop/eu_disinformation/continents")
 get_top_topics <- function(organisation) {
   
   all_keywords <- read_csv("all_keywords.csv")
@@ -25,6 +23,9 @@ get_top_topics <- function(organisation) {
   all_claim_reviews <- read_csv("all_claim_reviews.csv")
   all_organizations <- read_csv("all_organisations.csv")
   all_news_articles <- read_csv("all_news_articles.csv")
+  all_countries <- read_csv("all_countries.csv")
+  all_languages <- read_csv("all_languages.csv")
+  
   
   org <- organisation
   org_id <- all_organizations$`@id`[all_organizations$name==org]

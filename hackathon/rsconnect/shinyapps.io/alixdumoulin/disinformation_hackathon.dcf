@@ -1,0 +1,12 @@
+name: disinformation_hackathon
+title: disinformation_hackathon
+username:
+account: alixdumoulin
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1730405
+bundleId: 2762520
+url: https://alixdumoulin.shinyapps.io/disinformation_hackathon/
+when: 1580341288.58871
+asMultiple: FALSE
+asStatic: FALSE
