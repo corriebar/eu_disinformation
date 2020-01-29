@@ -61,10 +61,53 @@ for(i in 1:241) {
   this.raw.content <- rawToChar(raw.result$content)
   this.content <- fromJSON(this.raw.content)
   news_articles[[i]] <- this.content$`hydra:member`
+  news_articles[[i]]$image <- NULL
 }
 
 all_news_articles <- do.call(rbind, news_articles)
 
 write.csv(all_news_articles, "all_news_articles.csv")
+
+
+
+countries <- list()
+
+for(i in 1:241) {
+  print(i)
+  url  <- "https://api.veedoo.io"
+  path1 <- paste0("countries?page=", i)
+  path_full <- paste0(path1, "&perPage=30")
+  raw.result <- GET(url = url, path = path_full)
+  names(raw.result)
+  this.raw.content <- rawToChar(raw.result$content)
+  this.content <- fromJSON(this.raw.content)
+  countries[[i]] <- this.content$`hydra:member`
+  countries[[i]]$image <- NULL
+}
+
+all_countries <- do.call(rbind, countries)
+
+write.csv(all_countries, "all_countries.csv")
+
+
+
+keywords <- list()
+
+for(i in 1:241) {
+  print(i)
+  url  <- "https://api.veedoo.io"
+  path1 <- paste0("keywords?page=", i)
+  path_full <- paste0(path1, "&perPage=30")
+  raw.result <- GET(url = url, path = path_full)
+  names(raw.result)
+  this.raw.content <- rawToChar(raw.result$content)
+  this.content <- fromJSON(this.raw.content)
+  keywords[[i]] <- this.content$`hydra:member`
+  keywords[[i]]$image <- NULL
+}
+
+all_keywords <- do.call(rbind, keywords)
+
+write.csv(keywords, "all_keywords.csv")
 ```
 
