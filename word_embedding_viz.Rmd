@@ -17,28 +17,6 @@ d <- read_csv("claims_w_emb.csv") %>%
   arrange(yearPublished)
 ```
 
-```{r}
-p <- d %>%
-  ggplot(aes(x=tfidf_embedding_0, 
-             y=tfidf_embedding_1,
-         col=yearPublished,
-         text = glue('<b>Claim:</b>
-    <br>{stringr::str_wrap(claimReviewed)}<br>
-    <b>Year:</b>
-    <br>{yearPublished}'))) +
-  geom_point(size=1, alpha=0.8) +
-  labs(x="",
-       y="",
-       col="",
-       title="Claims made over the year") +
-  theme(axis.ticks.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.y=element_blank(),
-        axis.text.y=element_blank()) +
-  scale_color_distiller(palette="YlGnBu")
-
-ggplotly(p, tooltip="text")
-```
 
 ```{r}
 ax <- list(
@@ -52,16 +30,33 @@ ax <- list(
 plot_ly(data=d, x=~tfidf_embedding_0, y=~tfidf_embedding_1) %>%
   layout(title=list(text="<b>Claims over the Years</b><br>2015 to 2020",
                     x=0.1),
-         annotations=list(x=c(5.5, 3, -1), 
-                          y=c(2.2, -4.4, -4), 
-                          text=c("<b>Georgia</b>","<b>Belarus</b>", "<b>Nuclear</b>"), showarrow=F),
+         annotations=list(x=c(5.5, 3, -1, -2.5, 4, -3.8, 2.5), 
+                          y=c(2.2, -4.4, -4.5, 6, 5, 4.5, -2.7), 
+                          text=c("<b>Georgia</b>",
+                                 "<b>Belarus</b>", 
+                                 "<b>Nuclear</b>", "<b>M17</b>", "<b>UK</b>", "<b>White Helmets</b>", "<b>Crimea</b>"), showarrow=F),
          shapes = list(
               list(type="circle",
                        x0=3.7, x1=5.7, y0=1.5, y1=3,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
                    opacity = 0.15),
               list(type="circle",
-                       x0=2.2, x1=3.7, y0=-4.2, y1=-3.2,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
-                   opacity = 0.15)
+                       x0=2.2, x1=3.9, y0=-4.2, y1=-3.2,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.15),
+               list(type="circle",
+                       x0=-1.2, x1=-0.7, y0=-3.7, y1=-4.2,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.15),
+              list(type="circle",
+                       x0=-2.3, x1=-1.0, y0=5.3, y1=6.8,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.15),
+              list(type="circle",
+                       x0=2.2, x1=3.5, y0=4.2, y1=6,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.15),
+              list(type="circle",
+                       x0=-2.2, x1=-4, y0=2.1, y1=4.2,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.15),
+              list(type="circle",
+                       x0=1.8, x1=2.8, y0=-2.5, y1=-1.1,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.25)
          ),
          xaxis=ax, 
          yaxis=ax) %>%
