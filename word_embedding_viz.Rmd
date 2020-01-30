@@ -13,7 +13,8 @@ theme_set(theme_minimal())
 ```
 
 ```{r}
-d <- read_csv("claims_w_emb.csv")
+d <- read_csv("claims_w_emb.csv") %>%
+  arrange(yearPublished)
 ```
 
 ```{r}
@@ -37,5 +38,50 @@ p <- d %>%
   scale_color_distiller(palette="YlGnBu")
 
 ggplotly(p, tooltip="text")
+```
+
+```{r}
+ax <- list(
+  title = "",
+  zeroline = FALSE,
+  showline = FALSE,
+  showticklabels = FALSE,
+  showgrid = FALSE
+)
+
+plot_ly(data=d, x=~tfidf_embedding_0, y=~tfidf_embedding_1) %>%
+  layout(title=list(text="<b>Claims over the Years</b><br>2015 to 2020",
+                    x=0.1),
+         annotations=list(x=c(5.5, 3, -1), 
+                          y=c(2.2, -4.4, -4), 
+                          text=c("<b>Georgia</b>","<b>Belarus</b>", "<b>Nuclear</b>"), showarrow=F),
+         shapes = list(
+              list(type="circle",
+                       x0=3.7, x1=5.7, y0=1.5, y1=3,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.15),
+              list(type="circle",
+                       x0=2.2, x1=3.7, y0=-4.2, y1=-3.2,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                   opacity = 0.15)
+         ),
+         xaxis=ax, 
+         yaxis=ax) %>%
+    add_trace(type="scatter",
+            mode="markers",
+            marker=list(
+              opacity=0.8,
+              color=~yearPublished,
+              colorscale='YlGnBu',
+              reversescale=TRUE,
+              size=4,
+              colorbar = list(
+                title="Year Published"
+              )
+            ),
+            text = ~glue('<b>Claim:</b>
+    <br>{stringr::str_wrap(claimReviewed)}<br>
+    <b>Year:</b>
+    <br>{yearPublished}'),
+      hoverinfo="text") 
+  
 ```
 
