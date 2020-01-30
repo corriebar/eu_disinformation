@@ -108,14 +108,6 @@ keyword_cts <-  df_keywords %>%
 
 keyword_grp <- highlight_key(keyword_cts, ~keyword_names)
 
-# gg <- plot_ly(keyword_grp, 
-#         x=~month, y=~n,  type="scatter", mode="lines",
-#         text = ~glue('<b>Keyword:</b>
-#     <br>{keyword_names}<br>
-#     <b>Date:</b>
-#     <br>{month}'),
-#       hoverinfo="text")
-
 p <- ggplot(keyword_grp, aes(x=month, 
                              y=n)) +
   geom_line(col="darkgrey") +
