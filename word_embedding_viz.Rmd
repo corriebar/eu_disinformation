@@ -1,0 +1,41 @@
+---
+title: "Visualize Embeddings"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plotly)
+library(glue)
+
+theme_set(theme_minimal())
+```
+
+```{r}
+d <- read_csv("claims_w_emb.csv")
+```
+
+```{r}
+p <- d %>%
+  ggplot(aes(x=tfidf_embedding_0, 
+             y=tfidf_embedding_1,
+         col=yearPublished,
+         text = glue('<b>Claim:</b>
+    <br>{stringr::str_wrap(claimReviewed)}<br>
+    <b>Year:</b>
+    <br>{yearPublished}'))) +
+  geom_point(size=1, alpha=0.8) +
+  labs(x="",
+       y="",
+       col="",
+       title="Claims made over the year") +
+  theme(axis.ticks.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.text.y=element_blank()) +
+  scale_color_distiller(palette="YlGnBu")
+
+ggplotly(p, tooltip="text")
+```
+
