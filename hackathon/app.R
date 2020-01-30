@@ -6,7 +6,9 @@ library(tidyverse)
 library(plotly)
 library(shinydashboard)
 library(dashboardthemes)
-library(SnowballC)
+library(wordcloud)
+library(tm, SnowballC)
+library(RColorBrewer)
 
 all_keywords <- read_csv("all_keywords.csv")
 claims <- jsonlite::read_json("claims.json")
@@ -14,6 +16,8 @@ all_claim_reviews <- read_csv("all_claim_reviews.csv")
 all_organizations <- read_csv("all_organisations.csv")
 all_news_articles <- read_csv("all_news_articles.csv")
 continents <- read.csv("continents")
+all_countries <- read_csv("all_countries.csv")
+all_languages <- read_csv("all_languages.csv")
 
 
 get_top_topics <- function(organisation) {
@@ -269,6 +273,37 @@ top10_plotly <- ggplotly(top10_plot)
 
 
 
+get_wordcloud <- function(country) {
+  
+  all_countries <- read_csv("all_countries.csv")
+  all_claim_reviews <- read_csv("all_claim_reviews.csv")
+  
+  country_id <- all_countries$`@id`[all_countries$name==country]
+  
+  reviews <- c()
+  for (i in 1:length(claims)) {
+    
+    if((country_id %in% unlist(claims[[i]]$contentLocations))) {
+      reviews <- c(reviews, claims[[i]][["claimReview"]])
+    }
+  }
+  
+  text <- all_claim_reviews$claimReviewed[all_claim_reviews$`@id` %in% reviews]
+  text <- removeWords(text, stopwords("english"))
+  corpus <- VCorpus(VectorSource(text))
+  ## make lower case
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  ## remove white space
+  corpus <- tm_map(corpus, stripWhitespace)
+  ## remove numbers
+  corpus <- tm_map(corpus, removeNumbers)
+  ## remove punctuation
+  corpus <- tm_map(corpus, removePunctuation)
+  pal2 <- brewer.pal(8,"Dark2")
+  wordcloud(corpus, max.words = 30, width=20, height=20, min.freq=3, colors = pal2)
+}
+
+
 
 
 ui <- dashboardPage(
@@ -278,7 +313,8 @@ ui <- dashboardPage(
     dashboardSidebar(
       sidebarMenu(
         menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
-        menuItem("Explorer", tabName = "home", icon = icon("th"))
+        menuItem("Explore Organisations", tabName = "home", icon = icon("users")),
+        menuItem("Explore Claims", tabName = "claims", icon = icon("th"))
       )
     ),
     
@@ -307,6 +343,8 @@ ui <- dashboardPage(
       
     tabItem(tabName = "home",
     fluidRow(
+      h1("Explore the organisations spreading disinformation", style="text-align: center;"), 
+      br(),
       box(selectInput(inputId = "var", 
                       label = "Choose a variable to display",
                       choices = unique(all_organizations$name[all_organizations$`@id` %in% all_news_articles$author]),
@@ -318,7 +356,20 @@ fluidRow(
   box(plotlyOutput("plot"), title = "Top Keywords", width = 6, height = 500),
   box(plotlyOutput("plot_2"), title = "Languages of the articles", width = 6, height = 500)
         )
-      )
+      ),
+
+tabItem(tabName = "claims",
+       
+        fluidRow(
+          h1("Explore the claims made", style="text-align: center;"), 
+          br(),
+          box(selectInput(inputId = "country", 
+                          label = "Choose a country to display",
+                          choices = all_countries$name,
+                          selected = "Russia"), 
+              plotOutput("plot_6"), title = "Most common terms", width = 6, height = 500)
+        ) 
+)
     )
   )
 )
@@ -351,6 +402,10 @@ server <- function(input, output, session) {
   output$plot_5 <- renderPlotly({ 
     time_series_plotly
   })
-}
 
+output$plot_6 <- renderPlot({ 
+  get_wordcloud(input$country)
+})
+
+}
 shinyApp(ui, server)

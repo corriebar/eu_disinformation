@@ -280,4 +280,60 @@ time_series_plot <- ggplot(time_series, aes(x=dates, y=frequency, group = 1)) +
 theme_minimal()
 time_series_plotly <- ggplotly(time_series_plot)
 
-# All articles
+
+
+# word2vec
+
+library(wordVectors)
+
+text <- all_claim_reviews$claimReviewed
+text <- tolower(text)
+text <- gsub('[[:punct:] ]+',' ', text)
+
+writeLines(text, "summary_text.txt")
+if (!file.exists("vectors.bin")) {model = train_word2vec("summary_text.txt","vectors.bin",vectors=200,threads=4,window=12,iter=5,negative_samples=0)} else model = read.vectors("vectors.bin")
+
+model %>% closest_to("france")
+
+nazi = closest_to(model, model["nazi"],150)
+fishy = model[[nazi$word, average=F]]
+plot(fishy, method="pca",  col = "red")
+
+
+
+library(wordcloud)
+library(tm, SnowballC)
+
+
+get_wordcloud <- function(country) {
+  
+  country <- country
+  country_id <- all_countries$`@id`[all_countries$name==country]
+  
+  
+  reviews <- c()
+  for (i in 1:length(claims)) {
+    
+    if((country_id %in% unlist(claims[[i]]$contentLocations))) {
+      reviews <- c(reviews, claims[[i]][["claimReview"]])
+    }
+  }
+  
+  text <- all_claim_reviews$claimReviewed[all_claim_reviews$`@id` %in% reviews]
+  text <- removeWords(text, stopwords("english"))
+  corpus <- VCorpus(VectorSource(text))
+  ## make lower case
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  ## remove white space
+  corpus <- tm_map(corpus, stripWhitespace)
+  ## remove numbers
+  corpus <- tm_map(corpus, removeNumbers)
+  ## remove punctuation
+  corpus <- tm_map(corpus, removePunctuation)
+  pal2 <- brewer.pal(8,"Dark2")
+  wordcloud(corpus, max.words = 20, scale=c(8,.2), min.freq=3, colors = pal2)
+}
+
+get_wordcloud("France")
+
+
