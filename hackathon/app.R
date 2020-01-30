@@ -9,6 +9,8 @@ library(dashboardthemes)
 library(wordcloud)
 library(tm, SnowballC)
 library(RColorBrewer)
+library(glue)
+
 
 all_keywords <- read_csv("all_keywords.csv")
 claims <- jsonlite::read_json("claims.json")
@@ -18,7 +20,53 @@ all_news_articles <- read_csv("all_news_articles.csv")
 continents <- read.csv("continents")
 all_countries <- read_csv("all_countries.csv")
 all_languages <- read_csv("all_languages.csv")
+claims_w_emb <- read_csv("claims_w_emb.csv")
 
+d <- claims_w_emb %>%
+  arrange(yearPublished)
+
+ax <- list(
+  title = "",
+  zeroline = FALSE,
+  showline = FALSE,
+  showticklabels = FALSE,
+  showgrid = FALSE
+)
+
+
+plot_word_embedding <- plot_ly(data=d, x=~tfidf_embedding_0, y=~tfidf_embedding_1) %>%
+  layout(title=list(text="<b>Claims over the Years</b><br>2015 to 2020",
+                    x=0.1),
+         annotations=list(x=c(5.5, 3, -1), 
+                          y=c(2.2, -4.4, -4), 
+                          text=c("<b>Georgia</b>","<b>Belarus</b>", "<b>Nuclear</b>"), showarrow=F),
+         shapes = list(
+           list(type="circle",
+                x0=3.7, x1=5.7, y0=1.5, y1=3,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                opacity = 0.15),
+           list(type="circle",
+                x0=2.2, x1=3.7, y0=-4.2, y1=-3.2,  fillcolor = 'rgb(30, 100, 120)', line = list(color = 'rgb(30, 100, 120)'),
+                opacity = 0.15)
+         ),
+         xaxis=ax, 
+         yaxis=ax) %>%
+  add_trace(type="scatter",
+            mode="markers",
+            marker=list(
+              opacity=0.8,
+              color=~yearPublished,
+              colorscale='YlGnBu',
+              reversescale=TRUE,
+              size=4,
+              colorbar = list(
+                title="Year Published"
+              )
+            ),
+            text = ~glue('<b>Claim:</b>
+                         <br>{stringr::str_wrap(claimReviewed)}<br>
+                         <b>Year:</b>
+                         <br>{yearPublished}'),
+            hoverinfo="text") 
 
 get_top_topics <- function(organisation) {
   
@@ -53,9 +101,10 @@ get_top_topics <- function(organisation) {
   keywords_count_org <- org_keywords %>%
     group_by(tolower(name)) %>%
     count()
-  
-  top_topics <- head(keywords_count_org[order(-keywords_count_org$n),], n = 10)
-  colnames(top_topics) <- c("Topic", "Total")
+
+  top_topics <- head(keywords_count_org[order(-keywords_count_org$freq),], n = 10)
+  colnames(top_topics)[2] <- c("Total")
+  colnames(top_topics)[4] <- c("Topic")
   
   topics_plot <- ggplot(top_topics) +
     geom_bar(aes(y=Total, 
@@ -88,6 +137,9 @@ get_languages <- function(organisation) {
     count()
   
   colnames(languages_count_org) <- c("Language", "Total")
+  colnames(languages_count_org)[1] <- "Language"
+  colnames(languages_count_org)[2] <- "Total"
+  colnames(languages_count_org)[14] <- "Language name"
   
   p <- plot_ly(languages_count_org, labels = ~Language, values = ~Total, type = 'pie')
   p
@@ -175,10 +227,9 @@ continents_count <- continents %>%
 countries_2 <- subset(count_by_country, !(count_by_country$name %in% weird))
 countries_2$name <- countrycode(countries_2$name, "country.name", "iso3c")
 
-all_the_countries <- merge(continents_count, countries_2, by = "name", all = T)
+all_the_countries <- merge(continents, countries_2, by.x = "name", by.y = "name", all = T)
 all_the_countries[is.na(all_the_countries)] = 0
-all_the_countries$all <- all_the_countries$`sum(n)` + all_the_countries$n
-
+all_the_countries$all <- all_the_countries$freq + all_the_countries$freq
 
 # light grey boundaries
 l <- list(color = toRGB("black"), width = 0.5)
@@ -225,17 +276,15 @@ dates_df <- data.frame(dates, 1)
 
 time_series <- dates_df %>% 
   group_by(dates) %>% 
-  summarise(frequency = n())
+  count()
 
-
-time_series_plot <- ggplot(time_series, aes(x=dates, y=frequency, group = 1)) +
+time_series_plot <- ggplot(time_series, aes(x=dates, y=freq, group = 1)) +
   geom_line( color="steelblue") + 
   geom_point() +
   xlab("") +
   scale_x_discrete(breaks=dates[seq(1,length(dates),by=2000)]) +
   theme_minimal()
 time_series_plotly <- ggplotly(time_series_plot)
-
 
 
 
@@ -249,13 +298,13 @@ merged_a_o <- merge(all_news_articles,
                     by.x = "author",
                     by.y = "@id")
 
-articles_organisations <- 
-  count_by_org <- merged_a_o %>%
+articles_organisations <- merged_a_o %>%
+  select(name.y) %>%
   group_by(tolower(name.y)) %>%
   count()
 
-top10 <- head(articles_organisations[order(-articles_organisations$n),], n = 10)
-colnames(top10) <- c("Organisation", "Total")
+top10 <- head(articles_organisations[order(-articles_organisations$freq),], n = 10)
+colnames(top10) <- c("Organisation", "lower", "Total")
 
 top10_plot <- ggplot(top10) +
   geom_bar(aes(y=Total, 
@@ -306,26 +355,27 @@ get_wordcloud <- function(country) {
 
 
 
+
 ui <- dashboardPage(
   
   dashboardHeader(title = "Disinfo Explorer"),
   
-    dashboardSidebar(
-      sidebarMenu(
-        menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
-        menuItem("Explore Organisations", tabName = "home", icon = icon("users")),
-        menuItem("Explore Claims", tabName = "claims", icon = icon("th"))
-      )
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
+      menuItem("Explore Organisations", tabName = "home", icon = icon("users")),
+      menuItem("Explore Claims", tabName = "claims", icon = icon("th"))
+    )
+  ),
+  
+  
+  dashboardBody(
+    shinyDashboardThemes(
+      theme = "blue_gradient"
     ),
     
-    
-    dashboardBody(
-      shinyDashboardThemes(
-        theme = "blue_gradient"
-      ),
+    tabItems(
       
-      tabItems(
-        
       tabItem(tabName = "overview",
               fluidRow(
                 h1("Explore the EUvsDisinfo database", style="text-align: center;"), 
@@ -341,35 +391,39 @@ ui <- dashboardPage(
       ),
       
       
-    tabItem(tabName = "home",
-    fluidRow(
-      h1("Explore the organisations spreading disinformation", style="text-align: center;"), 
-      br(),
-      box(selectInput(inputId = "var", 
-                      label = "Choose a variable to display",
-                      choices = unique(all_organizations$name[all_organizations$`@id` %in% all_news_articles$author]),
-                      selected = "Sputnik Arabic"), width = 6, height = 100), 
-      box(htmlOutput("articles"), width = 6, height = 100)
-    ),
-      
-fluidRow(
-  box(plotlyOutput("plot"), title = "Top Keywords", width = 6, height = 500),
-  box(plotlyOutput("plot_2"), title = "Languages of the articles", width = 6, height = 500)
-        )
+      tabItem(tabName = "home",
+              fluidRow(
+                h1("Explore the organisations spreading disinformation", style="text-align: center;"), 
+                br(),
+                box(selectInput(inputId = "var", 
+                                label = "Choose a variable to display",
+                                choices = unique(all_organizations$name[all_organizations$`@id` %in% all_news_articles$author]),
+                                selected = "Sputnik Arabic"), width = 6, height = 100), 
+                box(htmlOutput("articles"), width = 6, height = 100)
+              ),
+              
+              fluidRow(
+                box(plotlyOutput("plot"), title = "Top Keywords", width = 6, height = 500),
+                box(plotlyOutput("plot_2"), title = "Languages of the articles", width = 6, height = 500)
+              )
       ),
-
-tabItem(tabName = "claims",
-       
-        fluidRow(
-          h1("Explore the claims made", style="text-align: center;"), 
-          br(),
-          box(selectInput(inputId = "country", 
-                          label = "Choose a country to display",
-                          choices = all_countries$name,
-                          selected = "Russia"), 
-              plotOutput("plot_6"), title = "Most common terms", width = 6, height = 500)
-        ) 
-)
+      
+      tabItem(tabName = "claims",
+              
+              fluidRow(
+                h1("Explore the claims made", style="text-align: center;"), 
+                br(),
+                box(selectInput(inputId = "country", 
+                                label = "Choose a country to display",
+                                choices = all_countries$name,
+                                selected = "Russia"), 
+                    plotOutput("plot_6"), title = "Most common terms", width = 12, height = 500)
+              ),
+              
+              fluidRow(
+                box(plotlyOutput("plot_7"), width = 12, height = 500)
+              ) 
+      )
     )
   )
 )
@@ -392,7 +446,7 @@ server <- function(input, output, session) {
   })
   
   output$plot_3 <- renderPlotly({ 
-   p
+    p
   })
   
   output$plot_4 <- renderPlotly({ 
@@ -402,10 +456,14 @@ server <- function(input, output, session) {
   output$plot_5 <- renderPlotly({ 
     time_series_plotly
   })
-
-output$plot_6 <- renderPlot({ 
-  get_wordcloud(input$country)
-})
-
+  
+  output$plot_6 <- renderPlot({ 
+    get_wordcloud(input$country)
+  })
+  
+  output$plot_7 <- renderPlotly({ 
+    plot_word_embedding
+  })
+  
 }
 shinyApp(ui, server)
