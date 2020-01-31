@@ -8,6 +8,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(plotly)
 library(glue)
+library(lubridate)
+library(stringr)
 
 theme_set(theme_minimal())
 ```
@@ -78,5 +80,43 @@ plot_ly(data=d, x=~tfidf_embedding_0, y=~tfidf_embedding_1) %>%
     <br>{yearPublished}'),
       hoverinfo="text") 
   
+```
+
+```{r}
+df_keywords <- d %>%
+  mutate(month = floor_date(datePublished, unit="month")) %>%
+  select(id, month, keyword_names) %>%
+  mutate(keyword_names = str_replace(keyword_names, "\\[", "") %>%
+           str_replace("\\]", "") %>%
+           str_replace_all("\'", "") %>%
+           str_trim() %>%
+           str_split(", ") )  %>%
+  unnest(keyword_names) 
+
+common_keywords <- df_keywords %>%
+  group_by(keyword_names) %>%
+  count() %>%
+  arrange(-n) %>%
+  filter(n >= 100) %>%
+  pull(keyword_names)
+  
+keyword_cts <-  df_keywords %>%
+  filter(keyword_names %in% common_keywords) %>%
+  group_by(month, keyword_names) %>%
+  count()
+
+
+keyword_grp <- highlight_key(keyword_cts, ~keyword_names)
+
+p <- ggplot(keyword_grp, aes(x=month, 
+                             y=n)) +
+  geom_line(col="darkgrey") +
+  labs(x="Month",
+       y="Number of Articles per Keyword/Month",
+       title="Changes in Keywords over Time")
+
+gg <- ggplotly(p)
+
+highlight(gg, on="plotly_hover", off = "plotly_deselect", color = "red", persistent=FALSE)
 ```
 
