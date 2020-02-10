@@ -4,17 +4,45 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message=F, warning = F)
 library(tidyverse)
 library(plotly)
 library(glue)
 library(lubridate)
 library(stringr)
 
+library(reticulate)
+library(rvest)
+library(tidytext)
+
+strip_html <- function(s) {
+    html_text(read_html(s))
+}
+
 theme_set(theme_minimal())
+
+use_python('/home/corrie/anaconda3/bin/python', required = T)
+```
+
+```{r, message=F}
+claim_reviews <- read_csv(here::here("data/all_claim_reviews.csv")) %>%
+  select(-X1) %>%
+  rename(id = `@id`,
+         type = `@type`,
+         html_text = text) %>%
+  mutate(text = map_chr(html_text, .f=strip_html))
+
+url_regex <- "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+claim_reviews <- claim_reviews %>%
+  mutate(text = str_replace(text, url_regex, "WEBSITELINK")) 
+
+claim_reviews %>%
+  write_csv(here::here("data/clean_claimreviews.csv"))
 ```
 
 ```{r}
+# run jupyter notebook
+
 d <- read_csv("claims_w_emb.csv") %>%
   arrange(yearPublished)
 ```
